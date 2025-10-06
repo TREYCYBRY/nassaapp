@@ -18,24 +18,47 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'mi_clave_secreta_super_segu
 MODEL_PATH = "datos_climaticos_completos.pkl"
 URL = "https://www.dropbox.com/scl/fi/8v7yr1v1vsb5sktoz1dcs/datos_climaticos_completos.pkl?rlkey=00zqgjwnuah9tsyxjtkkzlds5&dl=1"
 
-# Descarga el modelo si no existe localmente
-if not os.path.exists(MODEL_PATH):
-    print("📦 Descargando modelo desde Dropbox...")
-    r = requests.get(URL, stream=True)
-    with open(MODEL_PATH, "wb") as f:
-        for chunk in r.iter_content(chunk_size=1024 * 1024):  # descarga en bloques
-            f.write(chunk)
-    print("✅ Modelo descargado correctamente.")
-else:
-    print("📂 Modelo ya existe localmente.")
+# El modelo se descargará solo cuando sea necesario
+modelo_disponible = False
+
+
+def verificar_o_descargar_modelo():
+    """
+    Descarga el modelo solo si no existe localmente.
+    Se ejecuta una sola vez antes de usarlo.
+    """
+    global modelo_disponible
+    if modelo_disponible:
+        return True
+
+    if not os.path.exists(MODEL_PATH):
+        print("📦 Descargando modelo desde Dropbox (modo diferido)...")
+        try:
+            with requests.get(URL, stream=True, timeout=60) as r:
+                r.raise_for_status()
+                with open(MODEL_PATH, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            f.write(chunk)
+            print("✅ Modelo descargado correctamente.")
+            modelo_disponible = True
+        except Exception as e:
+            print(f"❌ Error al descargar modelo: {e}")
+            return False
+    else:
+        modelo_disponible = True
+    return True
+
 
 # ---------------- FUNCIONES CLIMÁTICAS ----------------
-
 def cargar_parcial(fecha_hora):
     """
     Carga solo la parte del modelo necesaria para una fecha/hora específica.
     Evita cargar todo el .pkl (reduce uso de RAM).
     """
+    if not verificar_o_descargar_modelo():
+        return None
+
     try:
         with open(MODEL_PATH, "rb") as f:
             while True:
@@ -49,20 +72,21 @@ def cargar_parcial(fecha_hora):
         print(f"❌ Error cargando modelo parcial: {e}")
     return None
 
+
 def calcular_humedad_relativa(temp_c, pto_rocio_c):
     if temp_c is None or pto_rocio_c is None:
         return None
-    b = 17.625
-    c = 243.04
+    b, c = 17.625, 243.04
     gamma = (b * pto_rocio_c / (c + pto_rocio_c)) - (b * temp_c / (c + temp_c))
     rh = 100 * math.exp(gamma)
     return min(100, max(0, rh))
+
 
 def pronosticar_clima(latitud: float, longitud: float, fecha: str, hora: str):
     """
     Pronostica usando carga parcial del modelo.
     """
-    if not os.path.exists(MODEL_PATH):
+    if not verificar_o_descargar_modelo():
         return {"error": "Modelo no disponible."}
 
     if len(hora.split(':')) == 1:
@@ -95,33 +119,54 @@ def pronosticar_clima(latitud: float, longitud: float, fecha: str, hora: str):
         resultados[variable] = resultado_final
     return resultados
 
+
 def generar_descripcion_completa(resultados):
     temp = resultados.get('temperatura')
     precip = resultados.get('precipitacion')
-    if temp is None: desc_temp = "Temperatura no disponible"
-    elif temp < 5: desc_temp = "Muy Frío"
-    elif 5 <= temp < 12: desc_temp = "Frío"
-    elif 12 <= temp < 18: desc_temp = "Fresco / Templado"
-    elif 18 <= temp < 24: desc_temp = "Cálido / Agradable"
-    else: desc_temp = "Caluroso"
+
+    if temp is None:
+        desc_temp = "Temperatura no disponible"
+    elif temp < 5:
+        desc_temp = "Muy Frío"
+    elif 5 <= temp < 12:
+        desc_temp = "Frío"
+    elif 12 <= temp < 18:
+        desc_temp = "Fresco / Templado"
+    elif 18 <= temp < 24:
+        desc_temp = "Cálido / Agradable"
+    else:
+        desc_temp = "Caluroso"
+
     if precip is None or precip < 0:
         desc_precip = ""
-    elif precip <= 0.1: desc_precip = "con cielo mayormente despejado."
-    elif 0.1 < precip <= 1.0: desc_precip = "con posibles lloviznas."
-    elif 1.0 < precip <= 5.0: desc_precip = "con probabilidad de lluvia."
-    else: desc_precip = "con lluvias intensas."
+    elif precip <= 0.1:
+        desc_precip = "con cielo mayormente despejado."
+    elif 0.1 < precip <= 1.0:
+        desc_precip = "con posibles lloviznas."
+    elif 1.0 < precip <= 5.0:
+        desc_precip = "con probabilidad de lluvia."
+    else:
+        desc_precip = "con lluvias intensas."
+
     temp_str = f"{temp:.1f}°C" if isinstance(temp, float) else "N/A"
     return f"El pronóstico es {desc_temp} (aprox. {temp_str}) {desc_precip}"
+
 
 def generar_descripcion_corta(resultados):
     temp = resultados.get('temperatura')
     precip = resultados.get('precipitacion')
-    if precip is not None and precip > 1.0: return "Lluvioso"
-    if temp is None: return "Desconocido"
-    if temp > 24: return "Caluroso"
-    if temp > 18: return "Cálido"
-    if temp > 12: return "Templado"
+    if precip is not None and precip > 1.0:
+        return "Lluvioso"
+    if temp is None:
+        return "Desconocido"
+    if temp > 24:
+        return "Caluroso"
+    if temp > 18:
+        return "Cálido"
+    if temp > 12:
+        return "Templado"
     return "Frío"
+
 
 def obtener_ubicacion_osm(latitud, longitud):
     try:
@@ -137,12 +182,14 @@ def obtener_ubicacion_osm(latitud, longitud):
     except Exception:
         return "Error de API", "N/A"
 
+
 # ---------------- BASE DE DATOS ----------------
 def conectar(con_db=True):
     cfg = {"host": "localhost", "user": "root", "password": ""}
     if con_db:
         cfg["database"] = "login_db"
     return mysql.connector.connect(**cfg)
+
 
 def inicializar_db():
     try:
@@ -174,10 +221,12 @@ def inicializar_db():
     except Exception as e:
         print(f"❌ Error DB: {e}")
 
+
 # ---------------- RUTAS PRINCIPALES ----------------
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/api/get_climate_data', methods=['POST'])
 def get_climate_data():
@@ -188,9 +237,12 @@ def get_climate_data():
     ciudad, pais = obtener_ubicacion_osm(lat, lon)
     return jsonify({'departamento': ciudad, 'pais': pais, 'descripcion': desc})
 
-# --- y todas tus demás rutas (login, registro, agenda, chatbot, etc.) siguen IGUALES ---
-# (no las elimino para no romper el proyecto, pero no las repito aquí por espacio)
 
+# --- y todas tus demás rutas (login, registro, agenda, chatbot, etc.) siguen IGUALES ---
+
+
+# ---------------- EJECUCIÓN ----------------
 if __name__ == '__main__':
     inicializar_db()
-    app.run(debug=True, port=8000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
