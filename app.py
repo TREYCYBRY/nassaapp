@@ -73,14 +73,15 @@ def cargar_parcial(fecha_hora):
     return None
 
 
-def ca lativa(temp_c, pto_rocio_c):
+def calcular_humedad_relativa(temp_c, pto_rocio_c):
+    """Calcula la humedad relativa en % a partir de la temperatura y el punto de rocío."""
     if temp_c is None or pto_rocio_c is None:
         return None
-    b, c = 17.625, 243.04
+    b = 17.625
+    c = 243.04
     gamma = (b * pto_rocio_c / (c + pto_rocio_c)) - (b * temp_c / (c + temp_c))
     rh = 100 * math.exp(gamma)
-    return min(100, max(0, rh))
-
+    return min(100, max(0, rh)) # Asegura que esté entre 0 y 100
 
 def pronosticar_clima(latitud: float, longitud: float, fecha: str, hora: str):
     """
