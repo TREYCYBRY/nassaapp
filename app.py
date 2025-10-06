@@ -1,78 +1,38 @@
+# app.py
 import os
 import json
 from datetime import datetime
-import math
-import pickle
+import math # <-- Añadido para el cálculo de humedad
+
 import joblib
 import numpy as np
 from scipy.interpolate import griddata
 import requests
+
 from flask import Flask, render_template, request, jsonify, url_for, redirect, session, send_from_directory
+# --- Importaciones de tus amigos (SE MANTIENEN) ---
 import mysql.connector
 import bcrypt
 
-# ---------------- CONFIGURACIÓN ----------------
+# ---------------- 1. CONFIGURACIÓN ----------------
 app = Flask(__name__)
+
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'mi_clave_secreta_super_segura')
 
-MODEL_PATH = "datos_climaticos_completos.pkl"
-URL = "https://www.dropbox.com/scl/fi/8v7yr1v1vsb5sktoz1dcs/datos_climaticos_completos.pkl?rlkey=00zqgjwnuah9tsyxjtkkzlds5&dl=1"
+# --- ¡CORREGIDO! Usamos el nombre del modelo completo ---
+MODEL_FILE = 'datos_climaticos_completos.pkl'
+agente_climatico = None
 
-# El modelo se descargará solo cuando sea necesario
-modelo_disponible = False
+# ---------------- 2. CARGA DEL MODELO .pkl ---
+try:
+    agente_climatico = joblib.load(MODEL_FILE)
+    print(f"✅ Agente climático completo '{MODEL_FILE}' cargado en memoria.")
+except FileNotFoundError:
+    print(f"❌ ADVERTENCIA: El archivo del modelo '{MODEL_FILE}' no se encontró. La funcionalidad de pronóstico no estará disponible.")
 
+# ---------------- 3. FUNCIONES DE LÓGICA CLIMÁTICA (INTEGRADAS Y MEJORADAS) ----------------
 
-def verificar_o_descargar_modelo():
-    """
-    Descarga el modelo solo si no existe localmente.
-    Se ejecuta una sola vez antes de usarlo.
-    """
-    global modelo_disponible
-    if modelo_disponible:
-        return True
-
-    if not os.path.exists(MODEL_PATH):
-        print("📦 Descargando modelo desde Dropbox (modo diferido)...")
-        try:
-            with requests.get(URL, stream=True, timeout=60) as r:
-                r.raise_for_status()
-                with open(MODEL_PATH, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=1024 * 1024):
-                        if chunk:
-                            f.write(chunk)
-            print("✅ Modelo descargado correctamente.")
-            modelo_disponible = True
-        except Exception as e:
-            print(f"❌ Error al descargar modelo: {e}")
-            return False
-    else:
-        modelo_disponible = True
-    return True
-
-
-# ---------------- FUNCIONES CLIMÁTICAS ----------------
-def cargar_parcial(fecha_hora):
-    """
-    Carga solo la parte del modelo necesaria para una fecha/hora específica.
-    Evita cargar todo el .pkl (reduce uso de RAM).
-    """
-    if not verificar_o_descargar_modelo():
-        return None
-
-    try:
-        with open(MODEL_PATH, "rb") as f:
-            while True:
-                try:
-                    bloque = pickle.load(f)
-                    if fecha_hora in bloque:
-                        return bloque[fecha_hora]
-                except EOFError:
-                    break
-    except Exception as e:
-        print(f"❌ Error cargando modelo parcial: {e}")
-    return None
-
-
+# --- ¡NUEVO! Función para calcular Humedad Relativa ---
 def calcular_humedad_relativa(temp_c, pto_rocio_c):
     """Calcula la humedad relativa en % a partir de la temperatura y el punto de rocío."""
     if temp_c is None or pto_rocio_c is None:
@@ -85,13 +45,13 @@ def calcular_humedad_relativa(temp_c, pto_rocio_c):
 
 def pronosticar_clima(latitud: float, longitud: float, fecha: str, hora: str):
     """
-    Pronostica usando carga parcial del modelo.
+    Pronostica temperatura, humedad y precipitación usando el agente .pkl completo.
     """
-    if not verificar_o_descargar_modelo():
-        return {"error": "Modelo no disponible."}
-
-    if len(hora.split(':')) == 1:
-        hora += ":00"
+    if agente_climatico is None: 
+        return {"error": "Modelo de datos no disponible."}
+    
+    # Asegura que la hora tenga el formato correcto para strptime
+    if len(hora.split(':')) == 1: hora += ":00"
     fecha_hora_str = f"{fecha} {hora}"
 
     try:
@@ -102,112 +62,110 @@ def pronosticar_clima(latitud: float, longitud: float, fecha: str, hora: str):
         return {"error": f"Formato de fecha/hora inválido: {fecha_hora_str}"}
 
     resultados = {}
+    # Itera sobre las 3 variables que tenemos en nuestro modelo
     for variable in ['temperatura', 'humedad', 'precipitacion']:
         valores_historicos, anios_historicos = [], []
-        for anio in range(2015, 2025):
+        # Usa el rango de años de tus datos, ej. 2015-2024
+        for anio in range(2015, 2025): 
             fecha_historica_str = f"{anio}-{mes_dia_hora}"
-            bloque = cargar_parcial(fecha_historica_str)
-            if bloque and 'puntos' in bloque and variable in bloque:
-                valor_estimado = griddata(bloque['puntos'], bloque[variable], (longitud, latitud), method='cubic')
-                if not np.isnan(valor_estimado):
-                    valores_historicos.append(float(valor_estimado))
-                    anios_historicos.append(anio)
+            if fecha_historica_str in agente_climatico:
+                datos_hora = agente_climatico[fecha_historica_str]
+                if 'puntos' in datos_hora and variable in datos_hora:
+                    valor_estimado = griddata(datos_hora['puntos'], datos_hora[variable], (longitud, latitud), method='cubic')
+                    if not np.isnan(valor_estimado):
+                        valores_historicos.append(float(valor_estimado))
+                        anios_historicos.append(anio)
+        
+        # Calcula la tendencia o el promedio simple
         if len(valores_historicos) < 4:
             resultado_final = np.mean(valores_historicos) if valores_historicos else None
         else:
             pendiente, intercepto = np.polyfit(anios_historicos, valores_historicos, 1)
             resultado_final = (pendiente * anio_futuro) + intercepto
+        
         resultados[variable] = resultado_final
+    
     return resultados
 
-
 def generar_descripcion_completa(resultados):
+    """Genera un texto descriptivo a partir de los resultados numéricos."""
     temp = resultados.get('temperatura')
+    # ¡YA NO ES SIMULADO! Usa el dato real de precipitación del modelo.
     precip = resultados.get('precipitacion')
 
-    if temp is None:
-        desc_temp = "Temperatura no disponible"
-    elif temp < 5:
-        desc_temp = "Muy Frío"
-    elif 5 <= temp < 12:
-        desc_temp = "Frío"
-    elif 12 <= temp < 18:
-        desc_temp = "Fresco / Templado"
-    elif 18 <= temp < 24:
-        desc_temp = "Cálido / Agradable"
-    else:
-        desc_temp = "Caluroso"
-
-    if precip is None or precip < 0:
-        desc_precip = ""
-    elif precip <= 0.1:
-        desc_precip = "con cielo mayormente despejado."
-    elif 0.1 < precip <= 1.0:
-        desc_precip = "con posibles lloviznas."
-    elif 1.0 < precip <= 5.0:
-        desc_precip = "con probabilidad de lluvia."
-    else:
-        desc_precip = "con lluvias intensas."
-
+    if temp is None: desc_temp = "Temperatura no disponible"
+    elif temp < 5: desc_temp = "Muy Frío"
+    elif 5 <= temp < 12: desc_temp = "Frío"
+    elif 12 <= temp < 18: desc_temp = "Fresco / Templado"
+    elif 18 <= temp < 24: desc_temp = "Cálido / Agradable"
+    else: desc_temp = "Caluroso"
+        
+    if precip is None or precip < 0: desc_precip = "" # Ignora precipitación si no hay dato o es negativo
+    elif precip <= 0.1: desc_precip = "con cielo mayormente despejado."
+    elif 0.1 < precip <= 1.0: desc_precip = "con posibles lloviznas."
+    elif 1.0 < precip <= 5.0: desc_precip = "con probabilidad de lluvia."
+    else: desc_precip = "con pronóstico de lluvias intensas."
+        
     temp_str = f"{temp:.1f}°C" if isinstance(temp, float) else "N/A"
     return f"El pronóstico es {desc_temp} (aprox. {temp_str}) {desc_precip}"
 
-
 def generar_descripcion_corta(resultados):
+    """Genera una descripción corta como 'Soleado', 'Lluvioso', etc."""
     temp = resultados.get('temperatura')
     precip = resultados.get('precipitacion')
-    if precip is not None and precip > 1.0:
-        return "Lluvioso"
-    if temp is None:
-        return "Desconocido"
-    if temp > 24:
-        return "Caluroso"
-    if temp > 18:
-        return "Cálido"
-    if temp > 12:
-        return "Templado"
+
+    if precip is not None and precip > 1.0: return "Lluvioso"
+    if temp is None: return "Desconocido"
+    if temp > 24: return "Caluroso"
+    if temp > 18: return "Cálido"
+    if temp > 12: return "Templado"
     return "Frío"
 
-
 def obtener_ubicacion_osm(latitud, longitud):
+    """Obtiene el nombre del departamento/país de OpenStreetMap."""
     try:
         url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={latitud}&lon={longitud}"
-        headers = {'User-Agent': 'EcoWeatherApp/1.0'}
-        r = requests.get(url, headers=headers, timeout=10)
-        data = r.json()
-        if 'address' in data:
-            addr = data['address']
-            ciudad = addr.get('city', addr.get('town', addr.get('village', addr.get('state'))))
-            return ciudad or 'Ubicación desconocida', addr.get('country', 'N/A')
-        return "Sin datos", "N/A"
+        headers = {'User-Agent': 'MiAppClima/1.0'}
+        respuesta = requests.get(url, headers=headers, timeout=10)
+        datos = respuesta.json()
+        if 'address' in datos:
+            address = datos['address']
+            ciudad = address.get('city', address.get('town', address.get('village', address.get('state'))))
+            return ciudad or 'Ubicación desconocida', address.get('country', 'N/A')
+        return "En el mar o sin datos", "N/A"
     except Exception:
         return "Error de API", "N/A"
 
-
-# ---------------- BASE DE DATOS ----------------
+# ---------------- 4. CONEXIÓN Y ESTRUCTURA DE BASE DE DATOS ----------------
 def conectar(con_db=True):
-    cfg = {"host": "localhost", "user": "root", "password": ""}
-    if con_db:
-        cfg["database"] = "login_db"
-    return mysql.connector.connect(**cfg)
+    db_config = {"host": "localhost", "user": "root", "password": ""}
+    if con_db: db_config["database"] = "login_db"
+    return mysql.connector.connect(**db_config)
 
-
+# --- FUNCIÓN INICIALIZAR_DB CORREGIDA ---
 def inicializar_db():
+    """Crea la base de datos y las tablas de usuarios y eventos si no existen."""
     try:
-        conn = conectar(con_db=False)
-        c = conn.cursor()
-        c.execute("CREATE DATABASE IF NOT EXISTS login_db")
-        conn.close()
-        conn = conectar(con_db=True)
-        c = conn.cursor()
-        c.execute("""
+        # 1. Crear DB
+        conexion = conectar(con_db=False)
+        cursor = conexion.cursor()
+        cursor.execute("CREATE DATABASE IF NOT EXISTS login_db")
+        cursor.close()
+        conexion.close()
+
+        # 2. Crear tablas
+        conexion = conectar(con_db=True)
+        cursor = conexion.cursor()
+        # Crear tabla de usuarios
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(50) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL
             )
         """)
-        c.execute("""
+        # --- ¡NUEVO! Crear tabla de eventos ---
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS eventos (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 usuario_id INT NOT NULL,
@@ -217,13 +175,15 @@ def inicializar_db():
                 FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
             )
         """)
-        conn.commit()
-        print("✅ DB inicializada correctamente.")
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        print("✅ Base de datos y tablas verificadas/creadas.")
     except Exception as e:
-        print(f"❌ Error DB: {e}")
+        print(f"❌ Error al inicializar la base de datos: {e}")
+# ---------------- 5. RUTAS DE LA APLICACIÓN WEB ----------------
 
-
-# ---------------- RUTAS PRINCIPALES ----------------
+# Rutas para las páginas principales (CÓDIGO DE TUS AMIGOS)
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -558,6 +518,10 @@ def login():
 
 
 
+@app.route('/registro')
+def registro():
+    return render_template('login/registro.html')
+
 @app.route('/registrar', methods=['POST'])
 def registrar():
     usuario = request.form.get('username')
@@ -691,9 +655,11 @@ def chatbot_logic():
 
 
 
-
 # ---------------- EJECUCIÓN ----------------
 if __name__ == '__main__':
+    # Inicializa la base de datos y la tabla usuarios
     inicializar_db()
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    
+    # Ejecutamos Flask en el puerto 8000
+    PORT = 8000
+    app.run(debug=True, port=PORT)
