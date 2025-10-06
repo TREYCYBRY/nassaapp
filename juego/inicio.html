@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoWheater</title>
+
+  <!-- Fuente -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Tu CSS externo (si lo usas) -->
+  <link rel="stylesheet" href="./inicio.css">
+
+  <!-- Estilos necesarios (incluye tus estilos base + fixes + animaciones) -->
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Outfit',sans-serif;background:radial-gradient(circle at 25% 25%, #0a1930, #00010f 80%);color:#eaf2ff;overflow-x:hidden}
+
+    /* NAVBAR */
+    nav{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:center;gap:40px;padding:18px 0;background:rgba(10,15,40,.35);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.05);z-index:100;box-shadow:0 0 20px rgba(102,170,255,.15)}
+    nav a{color:#b8d0ff;text-decoration:none;font-weight:400;transition:.3s;letter-spacing:1px;font-size:.95em;position:relative}
+    nav a::after{content:"";position:absolute;bottom:-5px;left:0;width:0;height:2px;background:#66aaff;transition:width .3s}
+    nav a:hover::after{width:100%}
+    nav a:hover{color:#66aaff;text-shadow:0 0 8px #66aaff}
+
+    /* Tarjetas / botones */
+    .modes{padding:130px 6% 90px; position:relative; z-index:1;} /* sobre la animación */
+    .modes-wrap{max-width:1100px;margin:0 auto}
+    .modes-header{text-align:center;margin-bottom:36px}
+    .modes-header h1{font-size:2.1em;color:#89c4ff;letter-spacing:.5px;margin-bottom:10px;text-shadow:0 0 10px rgba(102,170,255,.25)}
+    .modes-header p{color:#c9d8ff;opacity:.95}
+
+    .modes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:28px;margin-top:24px}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px 24px;position:relative;overflow:hidden;transition:transform .35s ease, box-shadow .35s ease, border-color .35s ease}
+    .card::before{content:"";position:absolute;top:-60%;left:-60%;width:220%;height:220%;background:radial-gradient(circle,rgba(102,170,255,.12),transparent 65%);opacity:0;transition:opacity .35s ease;pointer-events:none}
+    .card:hover{transform:translateY(-8px);box-shadow:0 0 28px rgba(102,170,255,.25);border-color:rgba(102,170,255,.25)}
+    .card:hover::before{opacity:1}
+    .mode-badge{position:absolute;top:14px;right:14px;background:linear-gradient(90deg,#004080,#0077ff);color:#eaf2ff;padding:6px 10px;border-radius:999px;font-size:.72em;letter-spacing:.6px;border:1px solid rgba(255,255,255,.15);box-shadow:0 0 10px rgba(102,170,255,.35)}
+    .mode-icon{color:#a8cfff;filter:drop-shadow(0 0 18px rgba(102,170,255,.35));margin-bottom:12px}
+    .card h3{color:#a8cfff;font-size:1.22em;margin-bottom:8px}
+    .card p{color:#c8d6ff;line-height:1.6;margin-bottom:16px}
+    .mode-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .btn{display:inline-block;padding:12px 22px;border-radius:12px;text-decoration:none;border:1px solid rgba(255,255,255,.15);color:#eaf2ff;cursor:pointer;transition:transform .25s ease, box-shadow .25s ease, background .25s ease;box-shadow:0 0 10px rgba(102,170,255,.25);background:rgba(255,255,255,.06)}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 0 18px rgba(102,170,255,.35)}
+    .btn.main{background:linear-gradient(90deg,#003366,#0055aa);border:none}
+    .btn.main:hover{background:linear-gradient(90deg,#004080,#0077ff)}
+    .btn.ghost{background:transparent}
+    .hint{display:block;margin-top:10px;color:#7a8cb3;font-size:.85em;opacity:.95}
+
+    /* Modal cámara */
+    .cam-modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,4,12,.65);backdrop-filter:blur(6px);z-index:1000}
+    .cam-modal[hidden]{display:none !important}
+    .cam-box{width:min(900px,92vw);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:22px;box-shadow:0 0 28px rgba(102,170,255,.25);overflow:hidden}
+    .cam-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);background:radial-gradient(circle at 20% -40%,rgba(102,170,255,.18),transparent 65%)}
+    .cam-head h3{color:#a8cfff;letter-spacing:.3px}
+    .cam-close{background:transparent;border:1px solid rgba(255,255,255,.15);color:#eaf2ff;border-radius:10px;padding:6px 10px;cursor:pointer}
+    .cam-body{position:relative;background:#02040c}
+    #camVideo{width:100%;max-height:70vh;display:block;object-fit:contain;filter:drop-shadow(0 0 16px rgba(102,170,255,.25))}
+    .cam-actions{display:flex;gap:10px;justify-content:flex-end;padding:12px 16px;border-top:1px solid rgba(255,255,255,.08)}
+
+    /* ===== Capa de animación de clima ===== */
+    .page-anim{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .sun, .rain{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
+    .theme-sunny .sun{opacity:1}
+    .theme-rainy .rain{opacity:1}
+
+   /* ——— SOLEADO (suave, sin bordes cuadrados) ——— */
+.sun{ position:absolute; inset:0; pointer-events:none; isolation:isolate; }
+
+.sun::before{
+  /* Tinte de cielo suave, muy amplio, difuminado */
+  content:"";
+  position:absolute; inset:-15vh -15vw 40vh -15vw;
+  background: radial-gradient(100% 70% at 50% -10%,
+    rgba(255,215,110,.25) 0%, rgba(255,215,110,.12) 35%, rgba(255,215,110,0) 70%);
+  filter: blur(10px);
+  mix-blend-mode: screen;
+}
+
+/* Disco solar con halo suave y sombras amplias */
+.sun .glow{
+  position:absolute; width:56vmin; height:56vmin; border-radius:50%;
+  left:calc(50% - 28vmin); top:-12vmin;
+  background: radial-gradient(circle at 50% 55%,
+    #ffd872 .95, rgba(255,216,114,.55) 45%, rgba(255,216,114,.20) 62%, transparent 70%);
+  filter: blur(8px);
+  box-shadow:
+    0 0 120px 40px rgba(255,216,114,.35),
+    0 0 220px 80px rgba(255,216,114,.18);
+  animation: sunPulse 7s ease-in-out infinite;
+}
+
+/* Halo adicional muy grande para fundir con el fondo */
+.sun .halo{
+  position:absolute; inset:-10vh -10vw;
+  background: radial-gradient(80% 60% at 50% -10%,
+    rgba(255,230,150,.25), rgba(255,230,150,0) 60%);
+  mix-blend-mode: screen;
+  filter: blur(14px);
+  opacity:.85;
+}
+
+/* Rayos con máscara circular y mezcla “screen” para evitar bordes */
+.sun .rays{
+  position:absolute; width:70vmin; height:70vmin;
+  left:calc(50% - 35vmin); top:-16vmin;
+  background: repeating-conic-gradient(from 0deg,
+    rgba(255,240,180,.28) 0 6deg, transparent 6deg 18deg);
+  /* máscara para “recortar” el círculo interior y el borde exterior */
+  -webkit-mask-image: radial-gradient(60% 60% at 50% 55%,
+    transparent 30%, black 58%, transparent 64%);
+          mask-image: radial-gradient(60% 60% at 50% 55%,
+    transparent 30%, black 58%, transparent 64%);
+  filter: blur(1.2px);
+  mix-blend-mode: screen;
+  opacity:.55;
+  animation: spin 22s linear infinite;
+}
+
+/* Animaciones (puedes dejar tus @keyframes existentes) */
+@keyframes sunPulse{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.06) } }
+@keyframes spin{ to{ transform:rotate(360deg) } }
+
+    /* Lluvia */
+    .rain .drop{
+      position:absolute;width:2px;height:70px;
+      background:linear-gradient(to bottom, rgba(150,200,255,.0), rgba(150,200,255,.85));
+      top:-80px;animation:fall 1.2s linear infinite;
+      filter:drop-shadow(0 0 6px rgba(102,170,255,.35));
+    }
+    @keyframes fall{to{transform:translateY(120vh)}}
+
+    /* Footer */
+    footer{text-align:center;padding:45px 0;color:#7a8cb3;font-size:.9em;border-top:1px solid rgba(255,255,255,.05);background:#02040c}
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav>
+    <a href="/inicio">Home</a>
+    <a href="/pronostico">Forecast</a>
+        <a href="/agenda">Agenda</a>
+    <a href="/comparar">Compare Places</a>
+    <a href="/educacion">Education</a>
+    <a href="/juego">Mini Games</a>
+    <a href="/login">Login</a>
+    <a href="/perfil">My Profile</a>
+    <a href="/logout" style="color:#ff6b6b;">Logout</a>
+  </nav>
+
+  <!-- Capa de animación clima -->
+ <div class="page-anim">
+  <div class="sun">
+    <div class="glow"></div>
+    <div class="halo"></div> <!-- <- NUEVO -->
+    <div class="rays"></div>
+  </div>
+  <div class="rain" id="rainLayer"></div>
+</div>
+
+
+  <!-- PANTALLA PRINCIPAL MINIJUEGOS -->
+  <section class="modes">
+    <div class="modes-wrap">
+      <header class="modes-header">
+        <h1>Choose your game mode</h1>
+        <p>Put together your way or play with default images.</p>
+      </header>
+
+      <div class="modes-grid">
+        <!-- MODO PERSONALIZADO -->
+        <article class="card">
+          <div class="mode-badge">New</div>
+          <div class="mode-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="64" height="64" fill="currentColor">
+              <path d="M20 5h-2.6l-1.1-1.7A2 2 0 0 0 14.7 2h-5.4a2 2 0 0 0-1.6.9L6.6 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm-8 13a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.2A2.8 2.8 0 1 0 9.2 13 2.8 2.8 0 0 0 12 15.8Z"/>
+            </svg>
+          </div>
+          <h3>Custom Game</h3>
+          <p>Use your camera or upload an image. The system will generate the puzzle for you</p>
+
+          <div class="mode-actions">
+            <button id="btnEmpezar" type="button" class="btn main">Get started</button>
+            <button id="btnSubirImagen" type="button" class="btn ghost">Upload image</button>
+            <input id="fileInput" type="file" accept="image/*" capture="environment" hidden />
+          </div>
+          <small class="hint">Tip: You can use your device's camera.</small>
+        </article>
+
+        <!-- MODO CLÁSICO -->
+        <article class="card">
+          <div class="mode-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="64" height="64" fill="currentColor">
+              <path d="M10 2H4a2 2 0 0 0-2 2v6h3a2 2 0 1 1 0 4H2v6a2 2 0 0 0 2 2h6v-3a2 2 0 1 1 4 0v3h6a2 2 0 0 0 2-2v-6h-3a2 2 0 1 1 0-4h3V4a2 2 0 0 0-2-2h-6v3a2 2 0 1 1-4 0Z"/>
+            </svg>
+          </div>
+          <h3>Classic game</h3>
+          <p>Select the difficulty level and play with default images.</p>
+
+          <div class="mode-actions">
+            <a href="/juego/clasico" class="btn main">Choose level</a>
+          </div>
+          <small class="hint">Default images and levels of 3x3 - 8x8</small>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal Cámara -->
+  <div id="cameraModal" class="cam-modal" hidden>
+    <div class="cam-box">
+      <header class="cam-head">
+        <h3>Tomar foto</h3>
+        <button class="cam-close" id="camClose" aria-label="Close">✕</button>
+      </header>
+      <div class="cam-body">
+        <video id="camVideo" autoplay playsinline></video>
+        <canvas id="camCanvas" hidden></canvas>
+      </div>
+      <div class="cam-actions">
+        <button class="btn ghost" id="camFlip" type="button" title="Change camera">Cambiar</button>
+        <button class="btn main" id="camShot" type="button">Take a photo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script>
+    /* ========= Animación clima: alternar Soleado/Lluvioso ========= */
+    (function(){
+      const CYCLE_MS = 1900; // duración de cada “fase” (12s). Cambia a tu gusto.
+      const body = document.body;
+      const rainLayer = document.getElementById('rainLayer');
+
+      function buildRain(){
+        if (!rainLayer) return;
+        rainLayer.innerHTML = '';
+        const drops = Math.floor(window.innerWidth / 18); // densidad
+        for (let i = 0; i < drops; i++){
+          const d = document.createElement('div');
+          d.className = 'drop';
+          d.style.left = (Math.random()*100).toFixed(2) + 'vw';
+          d.style.animationDelay = (Math.random()*1.2).toFixed(2) + 's';
+          d.style.height = (50 + Math.random()*70).toFixed(0) + 'px';
+          rainLayer.appendChild(d);
+        }
+      }
+      window.addEventListener('resize', buildRain);
+      buildRain();
+
+      // ciclo: lluvia -> sol -> lluvia -> ...
+      let rainy = true;
+      function applyTheme(){
+        body.classList.toggle('theme-rainy', rainy);
+        body.classList.toggle('theme-sunny', !rainy);
+        rainy = !rainy;
+      }
+      // arrancar alternando
+      applyTheme();
+      setInterval(applyTheme, CYCLE_MS);
+    })();
+
+    // Utilidad: archivo -> base64
+    const toBase64 = (f) => new Promise((res, rej) => {
+      const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f);
+    });
+
+    // ===== Subir imagen (explorador) =====
+    const btnSubir = document.getElementById('btnSubirImagen');
+    const fileInput = document.getElementById('fileInput');
+
+    btnSubir?.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+
+    fileInput?.addEventListener('change', async (e) => {
+      const f = e.target.files?.[0]; if (!f) return;
+      const dataUrl = await toBase64(f);
+      sessionStorage.setItem('rompecabezas_imagen', dataUrl);
+      location.href = "/juego/personalizado#img=" + encodeURIComponent(dataUrl);
+    });
+
+    // ===== Cámara (getUserMedia) =====
+    const btnEmpezar = document.getElementById('btnEmpezar');
+    const modal = document.getElementById('cameraModal');
+    const v = document.getElementById('camVideo');
+    const c = document.getElementById('camCanvas');
+    const shot = document.getElementById('camShot');
+    const closeBtn = document.getElementById('camClose');
+    const flipBtn = document.getElementById('camFlip');
+
+    let stream = null;
+    let facingMode = 'environment';
+
+    function msgCam(extra=''){
+      alert(
+        "No se pudo abrir la cámara.\n\n" +
+        "Asegúrate de:\n" +
+        "• Usar https:// o http://localhost\n" +
+        "• Dar permisos de cámara\n" +
+        "• Tener una cámara disponible\n\n" + extra
+      );
+    }
+
+    async function openCamera(){
+      const isLocalhost = ['localhost','127.0.0.1'].includes(location.hostname);
+      if (!window.isSecureContext && !isLocalhost) { msgCam("[Contexto no seguro: file:/// o http externo]"); return; }
+      if (!navigator.mediaDevices?.getUserMedia){ msgCam("[getUserMedia no soportado]"); return; }
+
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:facingMode } }, audio:false });
+        v.srcObject = stream;
+        modal.hidden = false;
+      }catch(err){
+        console.warn('getUserMedia error:', err);
+        msgCam("[Permiso denegado o sin cámara]");
+      }
+    }
+
+    function closeCamera(){
+      modal.hidden = true;
+      if (stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+    }
+
+    btnEmpezar?.addEventListener('click', (e)=>{ e.preventDefault(); openCamera(); });
+    closeBtn?.addEventListener('click', closeCamera);
+    window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeCamera(); });
+
+    flipBtn?.addEventListener('click', async ()=>{
+      facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+      if (stream) stream.getTracks().forEach(t=>t.stop());
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode }, audio:false });
+        v.srcObject = stream;
+      }catch(e){ console.warn('No se pudo cambiar de cámara', e); }
+    });
+
+    shot?.addEventListener('click', ()=>{
+      if (!stream) return;
+      const w=v.videoWidth, h=v.videoHeight;
+      c.width=w; c.height=h;
+      c.getContext('2d').drawImage(v,0,0,w,h);
+      const dataUrl = c.toDataURL('image/jpeg',0.9);
+      sessionStorage.setItem('rompecabezas_imagen', dataUrl);
+      closeCamera();
+      location.href = "/juego/personalizado#img=" + encodeURIComponent(dataUrl);
+    });
+  </script>
+
+  <footer>
+    © 2025 EcoWheater | Designed with 💙 for the planet
+  </footer>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - Access</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at 25% 25%, #0a1930, #00010f 80%);
+      color: #eaf2ff;
+      overflow-x: hidden;
+    }
+
+    /* NAVBAR */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      padding: 18px 0;
+      background: rgba(10, 15, 40, 0.35);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 100;
+      box-shadow: 0 0 20px rgba(102, 170, 255, 0.15);
+    }
+
+    nav a {
+      color: #b8d0ff;
+      text-decoration: none;
+      font-weight: 400;
+      transition: 0.3s;
+      letter-spacing: 1px;
+      font-size: 0.95em;
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: #66aaff;
+      transition: width 0.3s;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    nav a:hover {
+      color: #66aaff;
+      text-shadow: 0 0 8px #66aaff;
+    }
+
+    nav a.logout {
+      color: #ff6b6b;
+      font-weight: 600;
+    }
+
+    nav a.logout:hover {
+      color: #ff3b3b;
+      text-shadow: 0 0 8px #ff3b3b;
+    }
+
+    /* CONTAINER */
+    .container {
+      max-width: 500px;
+      margin: 120px auto 50px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(102, 170, 255, 0.2);
+      text-align: center;
+    }
+
+    .container h2 {
+      margin-bottom: 20px;
+    }
+
+    .container form input {
+      display: block;
+      width: 80%;
+      margin: 10px auto;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(90deg, #003366, #0055aa);
+      color: #eaf2ff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .container form input:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #004080, #0077ff);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+ <nav>
+    <a href="/inicio">Home</a>
+    <a href="{{ url_for('pronostico') }}">Forecast</a>
+    <a href="{{ url_for('agenda') }}">Schedule</a>
+    <a href="{{ url_for('comparar') }}">Compare Places</a>
+    <a href="{{ url_for('educacion') }}">Education</a>
+    <a href="/juego">Mini Games</a> 
+    <a href="{{ url_for('iniciosesion') }}">Login</a>
+    <a href="{{ url_for('perfil') }}">My Profile</a>
+    <a href="{{ url_for('logout') }}" style="color:#ff6b6b;">Log Out</a>
+</nav>
+
+  <!-- CONTENT -->
+  <div class="container">
+    <h2>Welcome to your profile area</h2>
+    <p>You haven’t logged in yet.</p>
+
+    <form action="{{ url_for('login') }}" method="get">
+      <input type="submit" value="Log In">
+    </form>
+
+    <form action="{{ url_for('registro') }}" method="get">
+      <input type="submit" value="Register">
+    </form>
+
+    <form action="{{ url_for('inicio') }}" method="get">
+      <input type="submit" value="Continue without an account">
+    </form>
+  </div>
+
+</body>
+
+</html>

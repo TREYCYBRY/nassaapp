@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Puzzle – Classic Mode</title>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#0a1930; --bg2:#00010f;
+      --c1:#eaf2ff; --c2:#b8d0ff; --c3:#a8cfff; --c4:#66aaff;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Outfit',sans-serif;background:radial-gradient(circle at 25% 25%, var(--bg1), var(--bg2) 80%);color:var(--c1)}
+
+    a{text-decoration:none;color:inherit}
+
+    /* ===== NAVBAR ===== */
+    nav{
+      position:fixed; top:0; left:0; width:100%;
+      display:flex; justify-content:center; gap:40px; padding:18px 0;
+      background:rgba(10,15,40,.35); backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(255,255,255,.02);
+      z-index:1000; box-shadow:0 0 18px rgba(102,170,255,.12);
+    }
+    nav a{
+      color:#b8d0ff; text-decoration:none; font-weight:400; transition:.3s;
+      letter-spacing:1px; font-size:.95em; position:relative;
+    }
+    nav a::after{
+      content:""; position:absolute; bottom:-5px; left:0; width:0; height:2px;
+      background:#66aaff; transition:width .3s;
+    }
+    nav a:hover::after{ width:100%; }
+    nav a:hover{ color:#66aaff; text-shadow:0 0 8px #66aaff; }
+
+    .wrap{max-width:1200px;margin:0 auto;padding:130px 6% 60px; position:relative; z-index:2;}
+
+    .hd{text-align:center;margin-bottom:18px}
+    .hd h1{color:#89c4ff;text-shadow:0 0 10px rgba(102,170,255,.25)}
+    .hd p{color:#c9d8ff;opacity:.95}
+
+    .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 10px}
+    .btn{
+      display:inline-block;padding:10px 18px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06);
+      color:var(--c1); box-shadow:0 0 10px rgba(102,170,255,.2);
+      transition:transform .2s, box-shadow .2s, background .2s; cursor:pointer
+    }
+    .btn:hover{transform:translateY(-2px);box-shadow:0 0 18px rgba(102,170,255,.35)}
+    .btn.main{background:linear-gradient(90deg,#003366,#0055aa);border:none}
+    .btn.main:hover{background:linear-gradient(90deg,#004080,#0077ff)}
+
+    .grid{
+      display:grid; gap:16px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      margin-top:10px;
+    }
+    .card{
+      position:relative; overflow:hidden; border-radius:16px;
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 0 18px rgba(102,170,255,.15);
+    }
+    .thumb{
+      display:block; width:100%; aspect-ratio: 4/3; object-fit:cover;
+      filter:saturate(1.05); transition:transform .35s ease;
+    }
+    .card:hover .thumb{ transform:scale(1.04); }
+    .overlay{
+      position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(2,4,12,0) 40%, rgba(2,4,12,.65) 100%);
+      pointer-events:none;
+    }
+    .title{
+      position:absolute; left:10px; bottom:10px; right:10px;
+      display:flex; justify-content:space-between; align-items:flex-end; gap:8px;
+      color:#eaf2ff;
+    }
+    .title h3{
+      font-size:1rem; line-height:1.2; text-shadow:0 0 10px rgba(2,4,12,.6);
+    }
+    .badge{
+      padding:6px 10px; border-radius:999px; white-space:nowrap;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+      color:#eaf2ff; font-weight:600; text-shadow:0 0 8px rgba(102,170,255,.25);
+      box-shadow:0 0 12px rgba(102,170,255,.25);
+    }
+    .piece{ margin-left:6px; opacity:.8 }
+
+    .page-anim{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+    .page-anim::before{
+      content:""; position:absolute; inset:0;
+      background: linear-gradient(to bottom, rgba(2,4,12,.22), rgba(2,4,12,0) 90px);
+      z-index:1; pointer-events:none;
+    }
+
+    .sun-side{ position:absolute; inset:0; mix-blend-mode:screen; opacity:.72; }
+    .sun-side .glow-left{
+      position:absolute; width:70vmin; height:70vmin; border-radius:50%;
+      left:-25vmin; top:10vh;
+      background: radial-gradient(circle at 60% 50%,
+        rgba(255,220,130,.95) 0%,
+        rgba(255,220,130,.45) 40%,
+        rgba(255,220,130,.15) 65%,
+        rgba(255,220,130,0) 78%);
+      filter: blur(10px);
+      box-shadow:
+        0 0 120px 40px rgba(255,220,130,.35),
+        0 0 220px 90px rgba(255,220,130,.18);
+      animation: glowDrift 18s ease-in-out infinite alternate;
+    }
+    @keyframes glowDrift{
+      0%   { transform: translateX(0) translateY(0); }
+      100% { transform: translateX(12vmin) translateY(-2vmin); }
+    }
+
+    .sun-side .rays-left{
+      position:absolute; width:140vw; height:140vh; top:-20vh; left:-60vw;
+      background:
+        repeating-linear-gradient(18deg,
+          rgba(255,240,180,.00) 0 42px,
+          rgba(255,240,180,.32) 42px 68px),
+        repeating-linear-gradient(18deg,
+          rgba(255,240,180,.00) 0 68px,
+          rgba(255,240,180,.12) 68px 112px);
+      -webkit-mask-image:
+        radial-gradient(120% 90% at 35% 50%, black 0%, black 45%, transparent 70%);
+      mask-image:
+        radial-gradient(120% 90% at 35% 50%, black 0%, black 45%, transparent 70%);
+      filter: blur(2px);
+      opacity:.48;
+      animation: raysSweep 16s linear infinite;
+      will-change: transform;
+      z-index:0;
+    }
+    @keyframes raysSweep{
+      0%   { transform: translateX(-8vw) }
+      100% { transform: translateX(18vw) }
+    }
+
+    footer{text-align:center;padding:45px 0;color:#7a8cb3;font-size:.9em;border-top:1px solid rgba(255,255,255,.05);background:#02040c}
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav>
+    <a href="/inicio">Home</a>
+    <a href="/pronostico">Forecast</a>
+    <a href="/agenda">Agenda</a>
+    <a href="/comparar">Compare Places</a>
+    <a href="/educacion">Education</a>
+    <a href="/juego">Mini Games</a>
+    <a href="/login">Login</a>
+    <a href="/perfil">My Profile</a>
+    <a href="/logout" style="color:#ff6b6b;">Log Out</a>
+  </nav>
+
+  <!-- ANIMATION LAYER -->
+  <div class="page-anim">
+    <div class="sun-side">
+      <div class="glow-left"></div>
+      <div class="rays-left"></div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="wrap">
+    <header class="hd">
+      <h1>Puzzle – Classic Mode</h1>
+      <p>Select an image and difficulty level; click to start the game.</p>
+    </header>
+
+    <div class="top">
+      <div></div>
+      <a class="btn main" href="/juego">← Back</a>
+    </div>
+
+    <section class="grid" id="gallery">
+      <!-- Cards injected via JS -->
+    </section>
+  </div>
+
+  <script>
+    // Configure your images here (folder: juego/imagen/)
+    const IMAGENES = [
+      { src: '/static/soleado1.jpg', titulo: 'Sunny Coast', n: 16 },
+      { src: '/static/lluvia1.jpg',  titulo: 'City in the Rain', n: 24 },
+      { src: '/static/soleado2.jpg', titulo: 'Bright Meadow', n: 20 },
+      { src: '/static/lluvia2.jpg',  titulo: 'Rainforest', n: 30 },
+      { src: '/static/soleado3.jpg', titulo: 'Golden Mountain', n: 25 },
+      { src: '/static/lluvia3.jpg',  titulo: 'Street Puddles', n: 18 },
+      { src: '/static/soleado4.jpg', titulo: 'Beach Sunset', n: 36 },
+      { src: '/static/lluvia4.jpg',  titulo: 'Wet Field', n: 28 },
+      { src: '/static/soleado5.jpg', titulo: 'Sunlit Canyon', n: 32 },
+      { src: '/static/lluvia5.jpg',  titulo: 'Foggy River', n: 27 },
+      { src: '/static/soleado6.jpg', titulo: 'Clear Valley', n: 40 },
+      { src: '/static/lluvia6.jpg',  titulo: 'Wet Road', n: 22 },
+    ];
+
+    const $ = s => document.querySelector(s);
+    const gallery = $('#gallery');
+
+    // Render cards
+    IMAGENES.forEach((item) => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        <img class="thumb" src="${item.src}" alt="${item.titulo}">
+        <div class="overlay"></div>
+        <div class="title">
+          <h3>${item.titulo}</h3>
+          <span class="badge">${item.n}<span class="piece">🧩</span></span>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        sessionStorage.setItem('rompecabezas_imagen', item.src);
+        sessionStorage.setItem('rompecabezas_piezas', String(item.n));
+        location.href = '/juego/rompecabezas_clasico#n=' + item.n + '&img=' + encodeURIComponent(item.src);
+      });
+      gallery.appendChild(card);
+    });
+  </script>
+
+  <footer>
+    © 2025 EcoWheater | Designed with 💙 for the planet
+  </footer>
+</body>
+</html>

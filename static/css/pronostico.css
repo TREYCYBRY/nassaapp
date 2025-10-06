@@ -1,0 +1,544 @@
+/* GENERAL */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Outfit", sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #0a192f, #1e3a8a);
+  color: #f0f0f0;
+  overflow: hidden;
+}
+
+/* NAVBAR (manteniendo tu estilo exacto) */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 18px 0;
+  background: rgba(10, 15, 40, 0.35);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 1000;
+  box-shadow: 0 0 20px rgba(102, 170, 255, 0.15);
+}
+
+nav a {
+  color: #b8d0ff;
+  text-decoration: none;
+  font-weight: 400;
+  transition: 0.3s;
+  letter-spacing: 1px;
+  font-size: 0.95em;
+  position: relative;
+  padding: 5px 0;
+}
+
+nav a::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: #66aaff;
+  transition: width 0.3s;
+}
+
+nav a:hover::after {
+  width: 100%;
+}
+
+nav a:hover {
+  color: #66aaff;
+  text-shadow: 0 0 8px #66aaff;
+}
+
+/* SECCIÓN PRINCIPAL */
+.pronostico {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100vh;
+  padding: 90px 4% 0;
+  gap: 40px;
+  box-sizing: border-box;
+}
+
+/* MAPA IZQUIERDA (40%) */
+#map {
+  flex: 0 0 40%;
+  height: 85vh;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 25px rgba(102, 170, 255, 0.2);
+}
+
+/* PANEL DERECHO (60%) */
+.container {
+  flex: 0 0 60%;
+  max-width: 700px;
+  height: 85vh;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 30px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.05);
+  scroll-behavior: smooth;
+}
+
+/* 🔹 Scroll personalizado del panel derecho */
+.container::-webkit-scrollbar {
+  width: 10px;
+}
+.container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+.container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2563eb, #1e3a8a);
+  border-radius: 10px;
+}
+.container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+}
+
+/* TITULOS */
+header h2 {
+  font-size: 2.1rem;
+  color: #a5b4fc;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  text-align: center;
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+/* BUSCADOR */
+.search-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+#search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+}
+
+#search-btn {
+  padding: 12px 24px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+#search-btn:hover {
+  background: #1e40af;
+}
+
+/* FORMULARIO MANUAL */
+.form-container {
+  margin-bottom: 25px;
+}
+
+.input-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.input-group input {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+}
+
+#get-manual-btn {
+  width: 100%;
+  padding: 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+#get-manual-btn:hover {
+  background: #1e40af;
+}
+
+/* RESULTADOS */
+.results {
+  margin-top: 15px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  max-height: 400px; /* antes 280px */
+  overflow-y: auto;
+  font-size: 1rem;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+}
+
+
+/* 🔹 Scroll personalizado en los resultados */
+.results::-webkit-scrollbar {
+  width: 8px;
+}
+.results::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+.results::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 10px;
+}
+.results::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 15, 40, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: linear-gradient(145deg, rgba(25, 40, 90, 0.9), rgba(15, 25, 60, 0.9));
+  padding: 30px;
+  border-radius: 22px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 0 35px rgba(102, 170, 255, 0.3);
+  color: white;
+  backdrop-filter: blur(18px);
+  animation: fadeIn 0.4s ease;
+}
+
+.modal-content h3 {
+  text-align: center;
+  color: #a5b4fc;
+  margin-bottom: 20px;
+  font-size: 1.7rem;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1rem;
+  color: #cbd5e1;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 1rem;
+}
+
+.form-group textarea::placeholder {
+  color: #b8d0ff;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+#cancel-agenda-btn {
+  background: #6b7280;
+  color: white;
+  margin-right: 10px;
+}
+
+#save-agenda-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.modal-buttons button:hover {
+  opacity: 0.9;
+  transform: scale(1.03);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .pronostico {
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+    overflow-y: auto;
+  }
+
+  #map,
+  .container {
+    width: 100%;
+    height: 70vh;
+  }
+}
+
+/* Contenedor del botón */
+.agenda-btn-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 25px;
+}
+
+/* Botón principal */
+#agendar-btn {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 30px;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(74, 144, 226, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+/* Efecto hover */
+#agendar-btn:hover {
+  background: linear-gradient(135deg, #66aaff, #4a90e2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(102, 170, 255, 0.5);
+}
+
+/* Efecto al hacer clic */
+#agendar-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+/* Animación de aparición */
+.agenda-btn-container {
+  animation: fadeInBtn 0.6s ease forwards;
+}
+
+@keyframes fadeInBtn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ESTILOS DEL CHATBOT */
+.chatbot-toggler {
+    position: fixed;
+    bottom: 30px;
+    right: 35px;
+    outline: none;
+    border: none;
+    height: 55px;
+    width: 55px;
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0055aa, #003366);
+    box-shadow: 0 0 20px rgba(102, 170, 255, 0.5);
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+.chatbot-toggler:hover {
+    transform: scale(1.1);
+}
+.chatbot-toggler span {
+    color: #fff;
+    font-size: 2.2rem;
+}
+
+.chatbot {
+    position: fixed;
+    right: 35px;
+    bottom: 100px;
+    width: 420px;
+    background: #0a1930;
+    border-radius: 22px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.5);
+    transform-origin: bottom right;
+    box-shadow: 0 0 128px 0 rgba(0,0,0,0.1), 0 32px 64px -48px rgba(0,0,0,0.5);
+    transition: all 0.2s ease;
+    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+body.show-chatbot .chatbot {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.chatbot header {
+    padding: 16px 0;
+    position: relative;
+    text-align: center;
+    color: #eaf2ff;
+    background: linear-gradient(90deg, #0055aa, #003366);
+}
+.chatbot header h2 {
+    font-size: 1.6rem;
+    margin: 0;
+}
+.chatbot header .close-btn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #eaf2ff;
+    cursor: pointer;
+    display: none;
+    font-size: 1.5rem;
+}
+
+.chatbot .chatbox {
+    overflow-y: auto;
+    height: 400px;
+    padding: 30px 20px 100px;
+    list-style: none;
+}
+.chatbox .chat {
+    display: flex;
+}
+.chatbox .incoming span {
+    height: 32px;
+    width: 32px;
+    color: #fff;
+    font-size: 1.5rem;
+    align-self: flex-end;
+    background: #0055aa;
+    text-align: center;
+    line-height: 32px;
+    border-radius: 4px;
+    margin: 0 10px 7px 0;
+}
+.chatbox .outgoing {
+    margin: 20px 0;
+    justify-content: flex-end;
+}
+.chatbox .chat p {
+    color: #fff;
+    max-width: 75%;
+    white-space: pre-wrap;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    border-radius: 18px 18px 0 18px;
+    background: #0055aa;
+    margin: 0;
+}
+.chatbox .incoming p {
+    color: #eaf2ff;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 18px 18px 18px 0;
+}
+
+.chatbot .chat-input {
+    display: flex;
+    gap: 5px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #0a1930;
+    padding: 5px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.chat-input textarea {
+    height: 55px;
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    max-height: 180px;
+    padding: 16px 15px 16px 0;
+    font-size: 0.95rem;
+    background: transparent;
+    color: #eaf2ff;
+    font-family: 'Outfit', sans-serif;
+}
+.chat-input span {
+    align-self: flex-end;
+    color: #66aaff;
+    cursor: pointer;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    font-size: 1.8rem;
+    visibility: hidden;
+}
+.chat-input textarea:valid ~ span {
+    visibility: visible;
+}

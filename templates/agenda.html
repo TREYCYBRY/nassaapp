@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda | EcoWeather</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/agenda.css') }}">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav>
+        <a href="{{ url_for('inicio') }}">Inicio</a>
+        <a href="{{ url_for('pronostico') }}">Pronóstico</a>
+        <a href="{{ url_for('agenda') }}">Agenda</a>
+        <a href="{{ url_for('comparar') }}">Comparar Lugares</a>
+        <a href="{{ url_for('educacion') }}">Educación</a>
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('perfil') }}">Mi Perfil</a>
+    </nav>
+
+    <!-- CONTENEDOR CALENDARIO -->
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <button id="prev">◀</button>
+            <h2 id="monthYear"></h2>
+            <button id="next">▶</button>
+        </div>
+        <div class="calendar-days-header">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div class="calendar" id="calendar">
+            <!-- Días generados con JS -->
+        </div>
+    </div>
+
+    <!-- MODAL EVENTO -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <h3>Agregar Evento para <span id="modalDate"></span></h3>
+            <input type="text" id="eventTitle" placeholder="Título del evento (ej. Viaje a Huaraz)">
+            <textarea id="eventDesc" rows="3" placeholder="Descripción (opcional)"></textarea>
+            <div class="modal-buttons">
+                <button id="deleteBtn">Eliminar</button>
+                <button id="cancelBtn">Cancelar</button>
+                <button id="saveBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FOOTER -->
+    <footer>
+        © 2025 EcoWeather | Tu planificador de viajes personal
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/agenda.js') }}"></script>
+</body>
+</html>

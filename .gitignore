@@ -1,0 +1,21 @@
+# Entorno virtual
+venv/
+*.pyc
+__pycache__/
+
+# Archivos de configuración de IDEs y editores
+.vscode/
+.idea/
+*.iml
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de caché de Python
+*.pyo
+*.pyd
+*.swp
+
+# Archivos de datos grandes para omitir
+datos_climaticos_completos.pkl

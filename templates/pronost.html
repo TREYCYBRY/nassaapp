@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoWeather - Pronóstico</title>
+
+    <!-- Librerías Externas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Enlace a tu CSS local -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pronostico.css') }}">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav>
+        <a href="/inicio">Home</a>
+        <a href="{{ url_for('pronostico') }}">Forecast</a>
+        <a href="{{ url_for('agenda') }}">Schedule</a>
+        <a href="{{ url_for('comparar') }}">Compare Places</a>
+        <a href="{{ url_for('educacion') }}">Education</a>
+        <a href="/juego">Mini Games</a> 
+        <a href="{{ url_for('iniciosesion') }}">Login</a>
+        <a href="{{ url_for('perfil') }}">My Profile</a>
+        <a href="{{ url_for('logout') }}" style="color:#ff6b6b;">Log Out</a>
+    </nav>
+
+    <!-- SECCIÓN PRINCIPAL -->
+    <main class="pronostico">
+        <!-- Mapa (columna izquierda) -->
+        <div id="map"></div>
+
+        <!-- Controles (columna derecha) -->
+        <div class="container">
+            <header>
+                <h2>Detail Weather Forecast</h2>
+                <p class="subtitle">
+                    Search for a place by name, select a point on the map, or enter coordinates to get an advanced weather forecast.
+                </p>
+            </header>
+
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search for a place in Peru (e.g. Machu Picchu)...">
+                <button id="search-btn">Search</button>
+            </div>
+
+            <div class="form-container">
+                <div class="input-group">
+                   
+                    <input type="date" id="manual-date">
+                    <input type="time" id="manual-time" value="14:00">
+                </div>
+                <button id="get-manual-btn">Get data</button>
+            </div>
+
+            <div class="results" id="results"></div>
+        </div>
+    </main>
+
+    <!-- MODAL PARA AGENDAR EVENTO -->
+    <div class="modal" id="agenda-modal">
+        <div class="modal-content">
+            <h3>Schedule Visit</h3>
+            <div class="form-group">
+                <label for="evento-lugar">Place:</label>
+                <input type="text" id="evento-lugar" readonly>
+            </div>
+            <div class="form-group">
+                <label for="evento-fecha">Date and hour:</label>
+                <input type="text" id="evento-fecha" readonly>
+            </div>
+            <div class="form-group">
+                <label for="evento-desc">Description (Optional):</label>
+                <textarea id="evento-desc" rows="3" placeholder="Ej: Remember to bring a raincoat."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-agenda-btn">Cancel</button>
+                <button id="save-agenda-btn">Save event</button>
+            </div>
+        </div>
+    </div>
+
+<!-- =============================================== -->
+    <!-- === CÓDIGO DEL WIDGET DEL CHATBOT A AÑADIR === -->
+    <!-- =============================================== -->
+    <button class="chatbot-toggler">
+        <span>🤖</span>
+    </button>
+    <div class="chatbot">
+      <header>
+        <h2>Asistente Climático</h2>
+        <span class="close-btn material-symbols-outlined">close</span>
+      </header>
+      <ul class="chatbox">
+        <li class="chat incoming">
+          <span>🤖</span>
+          <p>¡Hola! Soy tu asistente.<br>¿Qué te gustaría hacer hoy? (ej. "ir a la agenda")</p>
+        </li>
+      </ul>
+      <div class="chat-input">
+        <textarea placeholder="Escribe un mensaje..." required></textarea>
+        <span id="send-chat-btn">➤</span>
+      </div>
+    </div>
+    <!-- FIN DEL WIDGET -->
+
+    <script src="{{ url_for('static', filename='js/pronostico.js') }}"></script>
+</body>
+</html>

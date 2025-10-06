@@ -1,0 +1,165 @@
+/* === MINIJUEGOS: SELECCIÓN DE MODO === */
+.modes {
+  padding: 130px 6% 90px; /* despeje bajo el navbar fijo */
+  background: radial-gradient(circle at 70% 0%, rgba(102,170,255,0.07), transparent 55%);
+}
+
+.modes-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.modes-header {
+  text-align: center;
+  margin-bottom: 36px;
+  animation: fadeInUp 1s ease;
+}
+
+.modes-header h1 {
+  font-size: 2.1em;
+  color: #89c4ff;
+  letter-spacing: .5px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(102,170,255,0.25);
+}
+
+.modes-header p {
+  color: #c9d8ff;
+  opacity: .95;
+}
+
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 28px;
+  margin-top: 24px;
+}
+
+.mode-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+}
+
+.mode-card::before{
+  content:"";
+  position:absolute; inset:-60%;
+  background: radial-gradient(circle, rgba(102,170,255,0.12), transparent 65%);
+  opacity:0; transition: opacity .35s ease;
+}
+
+.mode-card:hover{
+  transform: translateY(-8px);
+  box-shadow: 0 0 28px rgba(102,170,255,0.25);
+  border-color: rgba(102,170,255,0.25);
+}
+.mode-card:hover::before{ opacity:1; }
+
+.mode-badge{
+  position:absolute; top:14px; right:14px;
+  background: linear-gradient(90deg,#004080,#0077ff);
+  color:#eaf2ff; padding:6px 10px; border-radius:999px;
+  font-size:.72em; letter-spacing:.6px; border:1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 0 10px rgba(102,170,255,0.35);
+}
+
+.mode-icon{
+  color:#a8cfff;
+  filter: drop-shadow(0 0 18px rgba(102,170,255,0.35));
+  margin-bottom: 12px;
+}
+
+.mode-card h3{
+  color:#a8cfff; font-size:1.22em; margin-bottom:8px;
+}
+
+.mode-card p{
+  color:#c8d6ff; line-height:1.6; margin-bottom:16px;
+}
+
+.mode-actions{
+  display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;
+}
+
+.btn{
+  display:inline-block; padding:12px 22px; border-radius:12px;
+  text-decoration:none; border:1px solid rgba(255,255,255,0.15);
+  color:#eaf2ff; cursor:pointer; transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+  box-shadow: 0 0 10px rgba(102,170,255,0.25);
+  background: rgba(255,255,255,0.06);
+}
+
+.btn:hover{ transform: translateY(-2px); box-shadow: 0 0 18px rgba(102,170,255,0.35); }
+
+.btn.main{
+  background: linear-gradient(90deg,#003366,#0055aa);
+  border: none;
+}
+.btn.main:hover{
+  background: linear-gradient(90deg,#004080,#0077ff);
+}
+
+.btn.ghost{
+  background: transparent;
+}
+
+.hint{
+  display:block; margin-top:10px; color:#7a8cb3; font-size:.85em;
+  opacity:.95;
+}
+
+
+
+
+/* === MODAL CÁMARA === */
+.cam-modal{
+  position:fixed; inset:0; display:grid; place-items:center;
+  background:rgba(2,4,12,.65); backdrop-filter: blur(6px); z-index:1000;
+}
+.cam-box{
+  width:min(900px,92vw); background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1); border-radius:22px;
+  box-shadow:0 0 28px rgba(102,170,255,.25); overflow:hidden;
+}
+.cam-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.08);
+  background: radial-gradient(circle at 20% -40%, rgba(102,170,255,.18), transparent 65%);
+}
+.cam-head h3{ color:#a8cfff; letter-spacing:.3px; }
+.cam-close{
+  background:transparent; border:1px solid rgba(255,255,255,.15);
+  color:#eaf2ff; border-radius:10px; padding:6px 10px; cursor:pointer;
+}
+.cam-body{ position:relative; background:#02040c; }
+#camVideo{
+  width:100%; max-height:70vh; display:block; object-fit:contain;
+  filter: drop-shadow(0 0 16px rgba(102,170,255,.25));
+}
+.cam-actions{
+  display:flex; gap:10px; justify-content:flex-end; padding:12px 16px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+
+/* deja tu .cam-modal tal cual... */
+.cam-modal{
+  position:fixed; inset:0; display:grid; place-items:center;
+  background:rgba(2,4,12,.65); backdrop-filter: blur(6px); z-index:1000;
+}
+
+/* AÑADE ESTO DESPUÉS: fuerza a ocultar cuando tenga el atributo hidden */
+.cam-modal[hidden] { display: none !important; }
+
+
+/* El brillo decorativo no debe capturar clics */
+.card::before { pointer-events: none; }
+
+/* Asegura que el modal realmente se oculte cuando tenga hidden */
+
+
+.cam-modal[hidden]{ display:none !important; }  /* ponlo al final del CSS */

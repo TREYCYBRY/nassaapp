@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoWeather - Login</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at 25% 25%, #0a1930, #00010f 80%);
+      color: #eaf2ff;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* NAVBAR */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      padding: 18px 0;
+      background: rgba(10, 15, 40, 0.35);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 100;
+      box-shadow: 0 0 20px rgba(102, 170, 255, 0.15);
+    }
+
+    nav a {
+      color: #b8d0ff;
+      text-decoration: none;
+      font-weight: 400;
+      transition: 0.3s;
+      letter-spacing: 1px;
+      font-size: 0.95em;
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: #66aaff;
+      transition: width 0.3s;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    nav a:hover {
+      color: #66aaff;
+      text-shadow: 0 0 8px #66aaff;
+    }
+
+    /* LOGIN CONTAINER */
+    .container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 120px;
+      padding-bottom: 60px;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 45px 40px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 0 25px rgba(102, 170, 255, 0.15);
+      animation: fadeInUp 1.2s ease-out;
+    }
+
+    .login-box h2 {
+      color: #89c4ff;
+      margin-bottom: 25px;
+      font-size: 1.8em;
+      letter-spacing: 2px;
+    }
+
+    .login-box input[type="text"],
+    .login-box input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #eaf2ff;
+      font-size: 1em;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .login-box input[type="text"]:focus,
+    .login-box input[type="password"]:focus {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 10px rgba(102, 170, 255, 0.4);
+    }
+
+    .login-box input[type="submit"] {
+      background: linear-gradient(90deg, #003366, #0055aa);
+      border: none;
+      padding: 12px 0;
+      width: 100%;
+      border-radius: 10px;
+      color: #eaf2ff;
+      font-size: 1em;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+      box-shadow: 0 0 10px rgba(102, 170, 255, 0.3);
+    }
+
+    .login-box input[type="submit"]:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #004080, #0077ff);
+      box-shadow: 0 0 20px rgba(102, 170, 255, 0.6);
+    }
+
+    .login-box a {
+      color: #89c4ff;
+      text-decoration: none;
+      font-size: 0.9em;
+      display: inline-block;
+      margin-top: 12px;
+      transition: color 0.3s;
+    }
+
+    .login-box a:hover {
+      color: #66aaff;
+      text-shadow: 0 0 8px #66aaff;
+    }
+
+    .mensaje {
+      margin-top: 15px;
+      font-size: 0.95em;
+      color: #f8bcbc;
+      background: rgba(255, 100, 100, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 35px 0;
+      color: #7a8cb3;
+      font-size: 0.85em;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: #02040c;
+      margin-top: auto;
+    }
+
+    nav a.logout {
+      color: #ff6b6b;
+      font-weight: 600;
+    }
+
+    nav a.logout:hover {
+      color: #ff3b3b;
+      text-shadow: 0 0 8px #ff3b3b;
+    }
+
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+ <nav>
+    <a href="/inicio">Home</a>
+    <a href="{{ url_for('pronostico') }}">Forecast</a>
+    <a href="{{ url_for('agenda') }}">Schedule</a>
+    <a href="{{ url_for('comparar') }}">Compare Places</a>
+    <a href="{{ url_for('educacion') }}">Education</a>
+    <a href="/juego">Mini Games</a> 
+    <a href="{{ url_for('iniciosesion') }}">Login</a>
+    <a href="{{ url_for('perfil') }}">My Profile</a>
+    <a href="{{ url_for('logout') }}" style="color:#ff6b6b;">Log Out</a>
+</nav>
+
+  <!-- LOGIN FORM -->
+  <div class="container">
+    <div class="login-box">
+      <h2>🚀 Log In</h2>
+      <form action="{{ url_for('login') }}" method="POST">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="submit" value="Enter">
+      </form>
+      <p><a href="{{ url_for('registro') }}">Register a new user</a></p>
+      <p><a href="{{ url_for('cambiar_password') }}">Change password</a></p>
+
+      {% if mensaje %}
+      <p class="mensaje">{{ mensaje }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    © 2025 EcoWeather | Designed with 💙 for the planet
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rompecabezas personalizado</title>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#0a1930; --bg2:#00010f;
+      --c1:#eaf2ff; --c2:#b8d0ff; --c3:#a8cfff; --c4:#66aaff;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'Outfit',sans-serif;
+      background: radial-gradient(circle at 25% 25%, var(--bg1), var(--bg2) 80%);
+      color:var(--c1);
+    }
+
+    /* NAVBAR */
+    nav{
+      position:fixed; top:0; left:0; width:100%;
+      display:flex; justify-content:center; gap:40px; padding:18px 0;
+      background:rgba(10,15,40,.35); backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(255,255,255,.05); z-index:100;
+      box-shadow:0 0 20px rgba(102,170,255,.15);
+    }
+    nav a{
+      color:#b8d0ff; text-decoration:none; font-weight:400; transition:.3s;
+      letter-spacing:1px; font-size:.95em; position:relative;
+    }
+    nav a::after{
+      content:""; position:absolute; bottom:-5px; left:0; width:0; height:2px;
+      background:#66aaff; transition:width .3s;
+    }
+    nav a:hover::after{ width:100%; }
+    nav a:hover{ color:#66aaff; text-shadow:0 0 8px #66aaff; }
+
+    /* LLUVIA (canvas) */
+    .wx-scene{ position:fixed; inset:0; z-index:1; pointer-events:none; }
+    #rainCanvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+    .wx-mask-top{
+      position:absolute; left:0; right:0; top:0; height:96px; z-index:2;
+      background:linear-gradient(to bottom, rgba(2,4,12,.25), rgba(2,4,12,0));
+    }
+    .wx-mist{
+      position:absolute; inset:0; z-index:1; pointer-events:none;
+      background:
+        radial-gradient(120% 80% at 50% 0%, rgba(180,200,255,.14), rgba(180,200,255,0) 62%),
+        radial-gradient(60% 40% at 70% 100%, rgba(120,140,200,.10), rgba(120,140,200,0) 62%);
+      filter: blur(6px);
+      mix-blend-mode:screen;
+    }
+
+    /* CONTENIDO */
+    .wrap{ min-height:100vh; padding:110px 6% 60px; position:relative; z-index:2; }
+    .header{text-align:center; margin-bottom:22px;}
+    .header h1{ color:#89c4ff; text-shadow:0 0 10px rgba(102,170,255,.25); }
+    .header p{ color:#c9d8ff; opacity:.95; }
+
+    .grid{
+      max-width:1100px; margin:0 auto;
+      display:grid; gap:22px;
+      grid-template-columns: 1.3fr .9fr;
+    }
+    @media (max-width: 980px){ .grid{ grid-template-columns:1fr; } }
+
+    .card{
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:22px; padding:22px;
+      box-shadow:0 0 22px rgba(102,170,255,.15);
+    }
+    .card h3{ color:var(--c3); margin-bottom:10px; }
+
+    .preview{
+      position:relative; display:grid; place-items:center;
+      background:#02040c; border-radius:16px;
+      border:1px solid rgba(255,255,255,.08); padding:10px; overflow:hidden;
+      min-height:360px;
+    }
+    .preview img{ width:100%; max-height:70vh; object-fit:contain; filter: drop-shadow(0 0 16px rgba(102,170,255,.25)); }
+
+    /* cuadrícula guía — casi invisible por defecto */
+    .grid-overlay{
+      position:absolute; inset:10px; border-radius:12px; pointer-events:none;
+      border: 1px solid rgba(255,255,255,.03); /* antes .08 */
+      background-image:
+        linear-gradient(#ffffff10, #ffffff10),
+        repeating-linear-gradient(to right, transparent 0 1px, transparent calc(var(--cellW) - 1px), #66aaff22 var(--cellW)),
+        repeating-linear-gradient(to bottom, transparent 0 1px, transparent calc(var(--cellH) - 1px), #66aaff22 var(--cellH));
+      background-blend-mode: normal, normal, normal;
+      opacity:.65; /* antes .85 */
+      transition: opacity .25s ease;
+    }
+    .grid-overlay.hidden{ opacity:0; }
+
+    .meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; color:#7a8cb3; font-size:.9em; }
+
+    .field{ margin-top:14px; }
+    .range-row{ display:flex; gap:12px; align-items:center; }
+    input[type="range"]{ width:100%; }
+    input[type="number"]{
+      width:90px; background:transparent; color:var(--c1);
+      border:1px solid rgba(255,255,255,.15); border-radius:10px; padding:8px;
+    }
+
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin-top:16px; }
+    .btn{
+      display:inline-block; padding:12px 22px; border-radius:12px;
+      text-decoration:none; border:1px solid rgba(255,255,255,.15);
+      color:var(--c1); cursor:pointer; transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+      box-shadow: 0 0 10px rgba(102,170,255,.25); background: rgba(255,255,255,0.06);
+    }
+    .btn:hover{ transform: translateY(-2px); box-shadow: 0 0 18px rgba(102,170,255,.35); }
+    .btn.main{ background: linear-gradient(90deg,#003366,#0055aa); border:none; }
+    .btn.main:hover{ background: linear-gradient(90deg,#004080,#0077ff); }
+    .btn.ghost{ background: transparent; }
+
+    .note{ color:#7a8cb3; font-size:.9em; margin-top:8px; }
+    .badge{ display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); color:#c8d6ff; }
+
+    footer{text-align:center;padding:45px 0;color:#7a8cb3;font-size:.9em;border-top:1px solid rgba(255,255,255,.05);background:#02040c}
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+<nav>
+  <a href="/inicio">Inicio</a>
+    <a href="/pronostico">Pronóstico</a>
+        <a href="/agenda">Agenda</a>
+    <a href="/comparar">Comparar Lugares</a>
+    <a href="/educacion">Educación</a>
+    <a href="/juego">Minijuegos</a>
+    <a href="/login">Login</a>
+    
+    <a href="/perfil">Mi Perfil</a>
+    <a href="/logout" style="color:#ff6b6b;">Cerrar Sesión</a>
+</nav>
+
+  <!-- LLUVIA (CANVAS) -->
+  <div class="wx-scene" aria-hidden="true">
+    <canvas id="rainCanvas"></canvas>
+    <div class="wx-mask-top"></div>
+    <div class="wx-mist"></div>
+  </div>
+
+  <div class="wrap">
+    <div class="header">
+      <h1>Configura tu rompecabezas</h1>
+      <p>Revisa la imagen y elige la dificultad (hasta 60 piezas). Luego crearemos el rompecabezas.</p>
+    </div>
+
+    <div class="grid">
+      <!-- Vista previa -->
+      <section class="card">
+        <h3>Vista previa</h3>
+        <div class="preview">
+          <img id="previewImg" alt="Imagen seleccionada">
+          <div id="gridOverlay" class="grid-overlay" style="--cellW: 80px; --cellH: 80px;"></div>
+        </div>
+        <div class="meta">
+          <span id="imgInfo" class="badge">Resolución: —</span>
+          <span id="dimInfo" class="badge">Celdas: —</span>
+        </div>
+        <p class="note">La cuadrícula solo es guía. El tablero final se ajustará al tamaño de la ventana.</p>
+      </section>
+
+      <!-- Configuración -->
+      <section class="card">
+        <h3>Dificultad</h3>
+
+        <div class="field">
+          <label for="pieces"><b>Piezas totales</b> (3–60)</label>
+          <div class="range-row">
+            <input id="pieces" type="range" min="3" max="60" value="16" step="1">
+            <input id="piecesNum" type="number" min="3" max="60" value="16">
+          </div>
+          <p class="note">Buscamos automáticamente una división filas×columnas cercana a un cuadrado (por ejemplo 4×4, 4×5, etc.).</p>
+        </div>
+
+        <div class="actions">
+          <button class="btn ghost" id="btnCambiar">Cambiar imagen</button>
+          <input id="fileInput" type="file" accept="image/*" hidden>
+          <!-- Volver SIEMPRE al inicio de minijuegos (/juego/inicio.html) -->
+          <a class="btn" href="/juego">← Volver</a>
+          <button class="btn main" id="continueBtn">Empezar</button>
+          <button class="btn" id="toggleGrid" type="button">Ocultar cuadrícula</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    /* ========= LLUVIA EN CANVAS ========= */
+    (function(){
+      const DEG = (d)=> d * Math.PI / 180;
+      const cfg = {
+        DENSIDAD_BASE: 1.0,
+        CAPAS: [
+          { velMin: 900, velMax: 1400, lenMin: 14, lenMax: 26, grosor: 1.0, op: 0.55 },
+          { velMin: 650, velMax: 1000, lenMin: 18, lenMax: 34, grosor: 1.2, op: 0.40 },
+          { velMin: 450, velMax: 780,  lenMin: 22, lenMax: 42, grosor: 1.6, op: 0.28 },
+        ],
+        ANGULO_DEG: 18,
+        RAFAGA_X: 16,
+        VEL_VIENTO: 0.35,
+        OP_COLOR: 'rgba(185,215,255,',
+        SALPICADURA: true
+      };
+
+      const canvas = document.getElementById('rainCanvas');
+      const ctx = canvas.getContext('2d');
+
+      let W = 0, H = 0, pixRatio = Math.min(2, window.devicePixelRatio || 1);
+      let drops = [];
+      let t0 = performance.now();
+
+      function resize(){
+        W = canvas.clientWidth;
+        H = canvas.clientHeight;
+        canvas.width = Math.floor(W * pixRatio);
+        canvas.height = Math.floor(H * pixRatio);
+        ctx.setTransform(pixRatio, 0, 0, pixRatio, 0, 0);
+        crearGotas();
+      }
+      function rand(a,b){ return a + Math.random()*(b-a); }
+      function crearGotas(){
+        drops = [];
+        const baseCount = Math.floor((W*H)/9000 * cfg.DENSIDAD_BASE);
+        cfg.CAPAS.forEach((layer, i)=>{
+          const count = Math.max(10, Math.floor(baseCount * (i===0?1.2:(i===1?1.0:0.8))));
+          for(let k=0;k<count;k++){
+            drops.push(genDrop(layer, i));
+          }
+        });
+      }
+      function genDrop(layer, layerIndex){
+        const x = Math.random() * (W + 200) - 100;
+        const y = Math.random() * (H + 200) - 100;
+        const len = rand(layer.lenMin, layer.lenMax);
+        const speed = rand(layer.velMin, layer.velMax);
+        const thickness = layer.grosor;
+        const opacity = layer.op * rand(0.85, 1.1);
+        return { x, y, len, speed, thickness, opacity, layerIndex, splash: 0 };
+      }
+      function step(ts){
+        const dt = (ts - t0) / 1000;
+        t0 = ts;
+
+        ctx.clearRect(0,0,W,H);
+
+        const ang = DEG(cfg.ANGULO_DEG);
+        const windX = Math.sin((ts/1000) * cfg.VEL_VIENTO) * cfg.RAFAGA_X;
+
+        drops.forEach(d=>{
+          const vy = d.speed * dt;
+          const vx = Math.tan(ang) * vy + windX*dt*4;
+
+          d.x += vx; d.y += vy;
+
+          if (d.y - d.len > H + 40 || d.x < -120 || d.x > W+120){
+            const layer = cfg.CAPAS[d.layerIndex];
+            Object.assign(d, genDrop(layer, d.layerIndex));
+            d.y = -Math.random()*160 - 20;
+          }
+
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.strokeStyle = `${cfg.OP_COLOR}${Math.max(0, Math.min(1, d.opacity))})`;
+          ctx.lineWidth = d.thickness;
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - Math.tan(ang)*d.len, d.y - d.len);
+          ctx.stroke();
+
+          if (cfg.SALPICADURA && d.y > H - 8 && d.splash === 0){
+            d.splash = 1;
+            const spOp = d.opacity*0.6;
+            const spW = 8 + d.thickness*3;
+            const spH = 2 + d.thickness*1.2;
+            ctx.fillStyle = `${cfg.OP_COLOR}${spOp})`;
+            ctx.beginPath();
+            ctx.ellipse(d.x, H-2, spW, spH, 0, 0, Math.PI*2);
+            ctx.fill();
+          }else if(d.y < H - 10){ d.splash = 0; }
+        });
+
+        requestAnimationFrame(step);
+      }
+
+      resize();
+      requestAnimationFrame(step);
+      window.addEventListener('resize', resize, {passive:true});
+    })();
+
+    /* ========= LÓGICA DE LA PÁGINA ========= */
+    const clamp = v => Math.max(3, Math.min(60, Number(v)||16));
+    const $ = sel => document.querySelector(sel);
+    function toBase64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }); }
+    function fromHash(){ const m=(location.hash||'').match(/#img=([^&]+)/); return m? decodeURIComponent(m[1]) : null; }
+    function bestFactorPair(n){
+      n = clamp(n);
+      let bestR=1,bestC=n,bestDiff=n-1;
+      for(let r=1;r<=Math.sqrt(n);r++){
+        if(n%r===0){
+          const c=n/r;
+          if(Math.abs(c-r)<bestDiff){ bestDiff=Math.abs(c-r); bestR=r; bestC=c; }
+        }
+      }
+      if(bestR*bestC!==n){
+        bestR = Math.floor(Math.sqrt(n));
+        bestC = Math.ceil(n/bestR);
+      }
+      return {rows:bestR, cols:bestC};
+    }
+
+    const img = $('#previewImg');
+    const info = $('#imgInfo');
+    const dimInfo = $('#dimInfo');
+    const overlay = $('#gridOverlay');
+
+    let dataUrl = fromHash() || sessionStorage.getItem('rompecabezas_imagen');
+
+    function setImage(src){
+      dataUrl = src;
+      sessionStorage.setItem('rompecabezas_imagen', src);
+      img.src = src;
+    }
+
+    if (!dataUrl){
+      img.alt = "No hay imagen cargada. Vuelve y selecciona una.";
+      info.textContent = "No hay imagen";
+    } else {
+      setImage(dataUrl);
+    }
+
+    img.addEventListener('load', ()=>{
+      info.textContent = `Resolución: ${img.naturalWidth} × ${img.naturalHeight}px`;
+      updateCells(Number($('#pieces').value));
+    });
+
+    const pieces = $('#pieces');
+    const piecesNum = $('#piecesNum');
+
+    function updateCells(n){
+      n = clamp(n);
+      const {rows, cols} = bestFactorPair(n);
+      dimInfo.textContent = `Celdas: ${rows} × ${cols} (${rows*cols} piezas)`;
+
+      const pr = $('.preview').getBoundingClientRect();
+      const innerW = pr.width - 20;
+      const innerH = pr.height - 20;
+      const cellW = innerW / cols;
+      const cellH = innerH / rows;
+      overlay.style.setProperty('--cellW', cellW + 'px');
+      overlay.style.setProperty('--cellH', cellH + 'px');
+    }
+
+    pieces.addEventListener('input', ()=>{
+      piecesNum.value = pieces.value;
+      updateCells(pieces.value);
+    });
+    piecesNum.addEventListener('input', ()=>{
+      piecesNum.value = clamp(piecesNum.value);
+      pieces.value = piecesNum.value;
+      updateCells(pieces.value);
+    });
+
+    window.addEventListener('resize', ()=> updateCells(pieces.value));
+
+    document.getElementById('btnCambiar').addEventListener('click', ()=> document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', async (e)=>{
+      const f = e.target.files?.[0]; if(!f) return;
+      const src = await toBase64(f);
+      setImage(src);
+      history.replaceState(null, '', location.pathname);
+    });
+
+    document.getElementById('continueBtn').addEventListener('click', ()=>{
+      const n = clamp(pieces.value);
+      sessionStorage.setItem('rompecabezas_piezas', String(n));
+      location.href = "/juego/rompecabeza#n=" + n + "&img=" + encodeURIComponent(dataUrl || "");
+    });
+
+    // Toggle de cuadrícula (ocultar/mostrar)
+    document.getElementById('toggleGrid').addEventListener('click', function(){
+      overlay.classList.toggle('hidden');
+      this.textContent = overlay.classList.contains('hidden') ? 'Mostrar cuadrícula' : 'Ocultar cuadrícula';
+    });
+  </script>
+
+  <footer>
+    © 2025 EcoWheater | Designed with 💙 para el planeta
+  </footer>
+</body>
+</html>
