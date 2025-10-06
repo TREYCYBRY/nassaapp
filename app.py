@@ -73,7 +73,7 @@ def cargar_parcial(fecha_hora):
     return None
 
 
-def calcular_humedad_relativa(temp_c, pto_rocio_c):
+def ca lativa(temp_c, pto_rocio_c):
     if temp_c is None or pto_rocio_c is None:
         return None
     b, c = 17.625, 243.04
@@ -223,21 +223,6 @@ def inicializar_db():
 
 
 # ---------------- RUTAS PRINCIPALES ----------------
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-@app.route('/api/get_climate_data', methods=['POST'])
-def get_climate_data():
-    data = request.json
-    lat, lon, date, time = data.get('latitude'), data.get('longitude'), data.get('date'), data.get('time')
-    pred = pronosticar_clima(lat, lon, date, time)
-    desc = generar_descripcion_completa(pred)
-    ciudad, pais = obtener_ubicacion_osm(lat, lon)
-    return jsonify({'departamento': ciudad, 'pais': pais, 'descripcion': desc})
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -571,10 +556,6 @@ def login():
     return render_template('login/login.html', mensaje=mensaje)
 
 
-
-@app.route('/registro')
-def registro():
-    return render_template('login/registro.html')
 
 @app.route('/registrar', methods=['POST'])
 def registrar():
