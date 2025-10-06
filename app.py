@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, jsonify, url_for, redirect, s
 # --- Importaciones de tus amigos (SE MANTIENEN) ---
 import mysql.connector
 import bcrypt
-
+import os, requests, pickle
 # ---------------- 1. CONFIGURACIÓN ----------------
 app = Flask(__name__)
 
@@ -22,6 +22,25 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'mi_clave_secreta_super_segu
 # --- ¡CORREGIDO! Usamos el nombre del modelo completo ---
 MODEL_FILE = 'datos_climaticos_completos.pkl'
 agente_climatico = None
+
+MODEL_PATH = "datos_climaticos_completos.pkl"
+URL = "https://www.dropbox.com/scl/fi/8v7yr1v1vsb5sktoz1dcs/datos_climaticos_completos.pkl?rlkey=00zqgjwnuah9tsyxjtkkzlds5&st=w24trlh8&dl=1"
+
+# Verificar si el modelo no existe localmente
+if not os.path.exists(MODEL_PATH):
+    print("📦 Descargando modelo desde Dropbox...")
+    r = requests.get(URL)
+    with open(MODEL_PATH, "wb") as f:
+        f.write(r.content)
+    print("✅ Modelo descargado correctamente.")
+
+# Luego cargas el modelo como siempre
+try:
+    with open(MODEL_PATH, "rb") as f:
+        modelo = pickle.load(f)
+    print("🚀 Modelo cargado correctamente.")
+except Exception as e:
+    print(f"❌ Error al cargar el modelo: {e}")
 
 # ---------------- 2. CARGA DEL MODELO .pkl ---
 try:
